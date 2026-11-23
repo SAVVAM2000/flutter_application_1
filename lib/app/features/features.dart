@@ -1,2 +1,3 @@
-export 'details/details_screen.dart';
+export 'auth/auth.dart';
+export 'details/details.dart';
 export 'home/home.dart';

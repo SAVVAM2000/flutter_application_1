@@ -1,19 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../../di/di.dart';
 import '../../app.dart';
 
 /// Второй экран приложения — детальная информация об элементе списка.
-class DetailsScreen extends StatelessWidget {
-  const DetailsScreen({super.key, required this.item});
+class DetailsScreen extends StatefulWidget {
+  const DetailsScreen({super.key, required this.id});
 
-  final ContentItem item;
+  final int id;
+
+  @override
+  State<DetailsScreen> createState() => _DetailsScreenState();
+}
+
+class _DetailsScreenState extends State<DetailsScreen> {
+  final _details = getIt<DetailsBloc>();
+  void loadDetails() => _details.add(DetailsLoad(id: widget.id));
+
+  @override
+  void initState() {
+    loadDetails();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Задаем фиксированные аккуратные размеры для картинки на экране деталей
-    final imageHeight = 350.0;
-    final imageWidth = 500.0;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Details'),
@@ -23,34 +36,84 @@ class DetailsScreen extends StatelessWidget {
               context.canPop() ? context.pop() : context.go('/home'),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Центрируем картинку, чтобы она красиво смотрелась на больших экранах
-            Center(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: SizedBox(
-                  height: imageHeight,
-                  width: imageWidth,
-                  child: Image.asset(
-                    item.imagePath, 
-                    fit: BoxFit.cover,
-                    alignment: Alignment.center, // Центрируем сам кадр
-                  ),
-                ),
+      body: BlocBuilder<DetailsBloc, DetailsState>(
+        bloc: _details,
+        builder: (context, state) {
+          return switch (state) {
+            DetailsInitial() => _buildDetailsInitial(),
+            DetailsLoadInProgress() => _buildDetailsLoadInProgress(),
+            DetailsLoadSuccess() => _buildDetailsLoadSuccess(state),
+            DetailsLoadFailure() => _buildDetailsLoadFailure(state),
+          };
+        },
+      ),
+    );
+  }
+
+  Widget _buildDetailsInitial() => SizedBox.shrink();
+
+  Widget _buildDetailsLoadInProgress() =>
+      const Center(child: CircularProgressIndicator());
+
+  Widget _buildDetailsLoadSuccess(DetailsLoadSuccess state) {
+    final content = state.content;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Image.network(
+              content.image,
+              height: 350,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                height: 350,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                child: const Icon(Icons.broken_image_outlined),
               ),
             ),
-            20.ph,
-            Text(item.title, style: Theme.of(context).textTheme.headlineSmall),
-            12.ph,
-            const Divider(height: 1, color: Color.fromRGBO(0, 0, 0, 0.08)),
-            16.ph,
+          ),
+          20.ph,
+          Text(
+            content.title,
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          8.ph,
+          Text(
+            content.author,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          12.ph,
+          const Divider(height: 1, color: Color.fromRGBO(0, 0, 0, 0.08)),
+          16.ph,
+          Text(
+            content.description,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailsLoadFailure(DetailsLoadFailure state) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
             Text(
-              item.description,
-              style: Theme.of(context).textTheme.bodyMedium,
+              state.exception.toString(),
+              textAlign: TextAlign.center,
+            ),
+            16.ph,
+            ElevatedButton(
+              onPressed: () => loadDetails(),
+              child: const Text('Повторить'),
             ),
           ],
         ),

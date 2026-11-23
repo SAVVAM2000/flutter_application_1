@@ -3,4 +3,6 @@ class Endpoints {
 
   static const String content = '/content';
   // Сюда можно добавлять другие эндпоинты
+
+  static String contentById(int id) => '$content/$id';
 }

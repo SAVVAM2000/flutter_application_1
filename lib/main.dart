@@ -1,10 +1,14 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+
 import 'di/di.dart';
+import 'firebase_options.dart';
 import 'my_app.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await setupLocator(); 
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await setupLocator();
 
   FlutterError.onError = (details) {
     return talker.handle(details.exception, details.stack);

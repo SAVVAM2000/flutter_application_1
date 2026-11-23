@@ -7,8 +7,11 @@ environment:
   sdk: ^3.13.4
 
 dependencies:
+  cloud_firestore: ^7.2.0
   dio: ^5.11.1
   equatable: ^3.0.0
+  firebase_auth: ^7.1.0
+  firebase_core: ^5.2.0
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1
@@ -29,8 +32,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
-  assets:
-    - assets/images/
-
-

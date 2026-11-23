@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../di/di.dart';
 import '../../app.dart';
@@ -24,7 +25,21 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Home')),
+      appBar: AppBar(
+        title: const Text('Home'),
+        actions: [
+          IconButton(
+            tooltip: 'Выйти',
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await context.read<AuthCubit>().signOut();
+              if (context.mounted) {
+                context.go('/login');
+              }
+            },
+          ),
+        ],
+      ),
       body: BlocBuilder<HomeBloc, HomeState>(
         bloc: _home,
         builder: (context, state) {
@@ -53,16 +68,38 @@ class _HomeScreenState extends State<HomeScreen> {
         spacing: 20,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Header',
-            style: Theme.of(context).textTheme.headlineLarge,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Header',
+                style: Theme.of(context).textTheme.headlineLarge,
+              ),
+              4.ph,
+              BlocBuilder<AuthCubit, AuthState>(
+                builder: (context, authState) {
+                  if (authState is AuthSuccess) {
+                    final profile = authState.profile;
+                    final created = profile == null
+                        ? ''
+                        : ' · профиль создан ${_formatDate(profile.createdAt)}';
+                    return Text(
+                      '${authState.email}$created',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ],
           ),
           ListView.separated(
             primary: false,
             shrinkWrap: true,
             itemCount: content.length,
-            itemBuilder: (_, index) => ContentCard(
+            itemBuilder: (context, index) => ContentCard(
               content: content[index],
+              onTap: () => context.push('/details/${content[index].id}'),
             ),
             separatorBuilder: (_, _) => 16.ph,
           ),
@@ -91,5 +128,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    final local = date.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    return '$day.$month.${local.year}';
   }
 }

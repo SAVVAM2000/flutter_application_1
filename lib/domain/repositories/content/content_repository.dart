@@ -21,4 +21,14 @@ class ContentRepository implements ContentRepositoryInterface {
       throw e.message.toString();
     }
   }
+
+  @override
+  Future<Content> getContentById(int id) async {
+    try {
+      final Response response = await dio.get(Endpoints.contentById(id));
+      return Content.fromJson(response.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw e.message.toString();
+    }
+  }
 }
